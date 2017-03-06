@@ -29,6 +29,9 @@ var play = {
     },
     create: function () {
         console.log('create');
+        //activation de la physique pour les collisions
+        game.physics.startSystem(Phaser.Physics.ARCADE);
+
         //this.bombe = game.add.sprite(150, 150, 'bombe');
         //this.bombe.animations.add('explode', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, true);
         //this.bombe.animations.play('explode');
@@ -43,8 +46,7 @@ var play = {
             [2, 3, 3, 3, 3, 3, 3, 3, 3, 2],
             [2, 3, 1, 3, 3, 3, 1, 3, 3, 2],
             [2, 3, 3, 3, 3, 3, 3, 3, 3, 2],
-            [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-
+            [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
         ];
         this.nbLignes = this.mapSource.length;
         this.nbColonnes = this.mapSource[0].length;
@@ -79,9 +81,13 @@ var play = {
                         image = 'ground';
                 }
                 var sol = game.add.sprite(x, y, 'ground');
-                sol.setScaleMinMax(2, 2);
-                this.map[lignes][colones] = game.add.sprite(x, y, image);
-                this.map[lignes][colones].setScaleMinMax(2, 2);
+                sol.setScaleMinMax(2, 2, 2, 2);
+                var tmpSprite = game.add.sprite(x, y, image);
+                game.physics.arcade.enable(tmpSprite);
+                tmpSprite.body.allowGravity = false;
+                tmpSprite.body.immovable = true;
+                this.map[lignes][colones] = tmpSprite;
+                this.map[lignes][colones].setScaleMinMax(2, 2, 2, 2);
             }
         }
 
@@ -92,11 +98,18 @@ var play = {
         this.player.animations.add('left', [2], 1, false);
         this.player.animations.add('right', [3], 1, false);
         this.player.setScaleMinMax(1.4, 1, 1.4, 1);
+        game.physics.arcade.enable(this.player);
+        this.player.body.allowGravity = false;
+        this.player.body.checkCollision.any = true;
 
         //gestion des bombes
         this.bombes = game.add.group();
         this.bombes.createMultiple(20, 'bombe', 0, false);
         this.bombes.callAll('animations.add', 'animations', 'explode', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10, false);
+
+        //collide
+        game.physics.arcade.enable(game.world, true);
+        game.physics.arcade.collide(this.player, this.bombes, null, this.collision, this);
 
         //interception des event clavier
         game.input.keyboard.addKeyCapture(
@@ -136,7 +149,7 @@ var play = {
             if (bombe) {
                 bombe.x = Math.floor((this.player.x - this.startX) / this.taillePico) * this.taillePico + this.startX;
                 bombe.y = Math.floor((this.player.y - this.startY) / this.taillePico) * this.taillePico + this.startY;
-                bombe.exists = true
+                bombe.exists = true;
                 bombe.lifespan = 1000;
                 if (!bombe.animations.isFinished) {
                     bombe.animations.stop();
@@ -154,6 +167,9 @@ var play = {
     startCoord: function () {
         this.startX = (game.world.width - (this.nbColonnes * this.taillePico)) / 2;
         this.startY = (game.world.height - (this.nbLignes * this.taillePico)) / 2;
+    },
+    collision: function (player, bombes) {
+        
     },
 };
 
